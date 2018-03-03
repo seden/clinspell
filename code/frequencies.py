@@ -8,7 +8,7 @@ def extract_frequencylist(infile, language):
         for line in f:
             c.update(line.split())
 
-    with open('../data/frequencies_' + language + '.json', 'r') as f:
+    with open('../data/frequencies_' + language + '.json', 'w') as f:
         json.dump(c, f)
 
 if __name__ == "__main__":
