@@ -110,6 +110,7 @@ def make_devcorpus(corpusfile, language, outfile, window_size=10, oov=False, sam
     misspelling_contexts = []
     used_samplelines = []  # to be able to backtrack
     distance_idxs = [] # keep track which element has which edit distance
+    window_size = int(window_size)
 
     for j, line in enumerate(corpus):
         print('Line {}:'.format(j))
@@ -234,7 +235,7 @@ def sample_80_20(devcorpusfile, amount=0):
         idxs_1_distance = [i for i, id in enumerate(distance_idxs) if id == 1]
         idxs_2_distance = [i for i, id in enumerate(distance_idxs) if id == 2]
 
-        while len(idxs_1_distance) < len(idxs_2_distance)*4:
+        while len(idxs_1_distance) > len(idxs_2_distance)*4:
             idxs_1_distance.pop(random.choice(range(len(idxs_1_distance))))
 
         all_idxs = sorted(list(set(idxs_1_distance + idxs_2_distance)))
