@@ -87,7 +87,7 @@ def make_devcorpus(corpusfile, language, outfile, window_size=10, oov=False, sam
 
     # load lexicon
     assert language in ['en', 'nl']
-    with open('lexicon_' + language + '.json', 'r') as f:
+    with open('../data/lexicon_' + language + '.json', 'r') as f:
         vocab = set(json.load(f))
 
     # load vector vocab
