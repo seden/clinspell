@@ -1,6 +1,6 @@
 # dependencies
 from pyxdameraulevenshtein import damerau_levenshtein_distance
-import fasttext
+import fastText as fasttext
 from doublemetaphone import dm
 import numpy as np
 
@@ -23,9 +23,9 @@ class Development(object):
         self.language = language
 
         # load frequency list
-        pathtofrequencies = 'frequencies_' + language + '.json'
+        pathtofrequencies = '../data/frequencies_' + language + '.json'
         # load trained fasttext model
-        pathtomodel = 'embeddings_' + language + '.bin'
+        pathtomodel = '../data/embeddings_' + language + '.bin'
 
         # PHASE 1
         self.comp_function = parameters['comp_function']  # item from ["sum", "mult", "max"]
@@ -37,7 +37,7 @@ class Development(object):
         self.window_size = parameters['window_size']  # number in range(0,11)
         self.reciprocal = parameters['reciprocal']  # boolean
         self.remove_stopwords = parameters['remove_stopwords']  # boolean
-        self.stopwords = frozenset(json.load(open('stopwords_' + str(self.language) + '.json', 'r')))
+        self.stopwords = frozenset(json.load(open('../data/stopwords_' + str(self.language) + '.json', 'r')))
 
         # PHASE 3
         self.edit_distance = parameters['edit_distance']  # item from [1, 2, 3, 4]
@@ -124,9 +124,9 @@ class Development(object):
         :return: vectorized sequence
         """
         if remove_oov:
-            sequence = [x for x in sequence if x in self.model.words]
+            sequence = [x for x in sequence if x in self.model.get_words()]
 
-        return [np.array(self.model[x]) for x in sequence]
+        return [np.array(self.model.get_word_vector(x)) for x in sequence]
 
     @staticmethod
     def spell_score(misspelling, candidates, method=1):
@@ -187,19 +187,19 @@ class Development(object):
                 processed_context[0] = [t for t in processed_context[0] if t not in self.stopwords]
                 processed_context[1] = [t for t in processed_context[1] if t not in self.stopwords]
 
-            center = self.normalize(np.array(self.model[misspelling]))  # create or call vector representation for misspelling
+            center = self.normalize(np.array(self.model.get_word_vector(misspelling)))  # create or call vector representation for misspelling
             left_window = self.vectorize(processed_context[0], remove_oov=True)  # take only in-voc tokens
             right_window = self.vectorize(processed_context[1], remove_oov=True)  # take only in-voc tokens
 
             if left_window:
                 vectorized_left_window = comp_function(left_window, reciprocal=self.reciprocal)
             else:
-                vectorized_left_window = np.zeros(len(self.model.dim))
+                vectorized_left_window = np.zeros(self.model.get_dimension())
 
             if right_window:
                 vectorized_right_window = comp_function(right_window, reciprocal=self.reciprocal)
             else:
-                vectorized_right_window = np.zeros(len(self.model.dim))
+                vectorized_right_window = np.zeros(self.model.get_dimension())
 
             if self.include_misspelling:
                 vectorized_context = comp_function((vectorized_left_window, center, vectorized_right_window))
@@ -213,11 +213,11 @@ class Development(object):
 
             # make vector representations of candidates
             for i, candidate in enumerate(candidates):
-                if candidate in self.model.words:
-                    candidate_vectors.append(self.normalize(np.array(self.model[candidate])))
+                if candidate in self.model.get_words():
+                    candidate_vectors.append(self.normalize(np.array(self.model.get_word_vector(candidate))))
                 else:
                     if self.include_oov_candidates:
-                        candidate_vectors.append(self.normalize(np.array(self.model[candidate])))
+                        candidate_vectors.append(self.normalize(np.array(self.model.get_word_vector(candidate))))
                         oov_idxs.append(i)
                     else:
                         remove_idxs.append(i)

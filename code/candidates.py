@@ -130,7 +130,7 @@ if __name__ == "__main__":
     """
     language = sys.argv[4]
     assert language in ["en", "nl"]
-    vocab = json.load(open("lexicon_" + language + ".json", 'r'))
+    vocab = json.load(open("../data/lexicon_" + language + ".json", 'r'))
     vocab_dict = load_vocab(vocab)
 
     with open(sys.argv[1], 'r') as f:
