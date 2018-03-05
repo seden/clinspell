@@ -92,7 +92,7 @@ def make_devcorpus(corpusfile, language, outfile, window_size=10, oov=False, sam
 
     # load vector vocab
     with open('../data/embeddings_' + language + '.vec', 'r') as f:
-        vector_vocab = set([line.strip() for i, line in enumerate(f) if i > 0])
+        vector_vocab = set([line.split()[0] for i, line in enumerate(f) if i > 0])
 
     # load sample
     if samplesize:
