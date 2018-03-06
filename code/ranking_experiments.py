@@ -188,8 +188,8 @@ class Development(object):
                 processed_context[1] = [t for t in processed_context[1] if t not in self.stopwords]
 
             center = self.normalize(np.array(self.model.get_word_vector(misspelling)))  # create or call vector representation for misspelling
-            left_window = self.vectorize(processed_context[0], remove_oov=True)  # take only in-voc tokens
-            right_window = self.vectorize(processed_context[1], remove_oov=True)  # take only in-voc tokens
+            left_window = self.vectorize([processed_context[0]], remove_oov=True)  # take only in-voc tokens
+            right_window = self.vectorize([processed_context[1]], remove_oov=True)  # take only in-voc tokens
 
             if left_window:
                 vectorized_left_window = comp_function(left_window, reciprocal=self.reciprocal)
