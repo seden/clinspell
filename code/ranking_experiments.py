@@ -3,6 +3,7 @@ from pyxdameraulevenshtein import damerau_levenshtein_distance
 import fastText as fasttext
 from doublemetaphone import dm
 import numpy as np
+from gensim.models import KeyedVectors
 
 # built-in packages
 from functools import reduce
@@ -26,12 +27,15 @@ class Development(object):
         pathtofrequencies = '../data/frequencies_' + language + '.json'
         # load trained fasttext model
         pathtomodel = '../data/embeddings_' + language + '.bin'
+        # load trained fasttext vectors
+        pathtovecs = '../data/embeddings_' + language + '.vec'
 
         # PHASE 1
         self.comp_function = parameters['comp_function']  # item from ["sum", "mult", "max"]
         self.include_misspelling = parameters['include_misspelling']  # boolean
         self.include_oov_candidates = parameters['include_oov_candidates']  # boolean
         self.model = fasttext.load_model(pathtomodel)   # path to fasttext model
+        self.gen_model = KeyedVectors.load_word2vec_format(pathtovec)
 
         # PHASE 2
         self.window_size = parameters['window_size']  # number in range(0,11)
@@ -123,10 +127,13 @@ class Development(object):
         :param remove_oov: whether to vectorize oov tokens
         :return: vectorized sequence
         """
-        if remove_oov:
-            sequence = [x for x in sequence if x in self.model.get_words()]
+        if isinstance(sequence, str):
+            sequence = [sequence]
 
-        return [np.array(self.model.get_word_vector(x)) for x in sequence]
+        if remove_oov:
+            sequence = [x for x in sequence if x in self.gen_model.vocab]
+
+        return [np.array(self.gen_model[x]) for x in sequence]
 
     @staticmethod
     def spell_score(misspelling, candidates, method=1):
@@ -188,18 +195,18 @@ class Development(object):
                 processed_context[1] = [t for t in processed_context[1] if t not in self.stopwords]
 
             center = self.normalize(np.array(self.model.get_word_vector(misspelling)))  # create or call vector representation for misspelling
-            left_window = self.vectorize([processed_context[0]], remove_oov=True)  # take only in-voc tokens
-            right_window = self.vectorize([processed_context[1]], remove_oov=True)  # take only in-voc tokens
+            left_window = self.vectorize(processed_context[0], remove_oov=True)  # take only in-voc tokens
+            right_window = self.vectorize(processed_context[1], remove_oov=True)  # take only in-voc tokens
 
             if left_window:
                 vectorized_left_window = comp_function(left_window, reciprocal=self.reciprocal)
             else:
-                vectorized_left_window = np.zeros(self.model.get_dimension())
+                vectorized_left_window = np.zeros(self.gen_model.vector_size)
 
             if right_window:
                 vectorized_right_window = comp_function(right_window, reciprocal=self.reciprocal)
             else:
-                vectorized_right_window = np.zeros(self.model.get_dimension())
+                vectorized_right_window = np.zeros(self.gen_model.vector_size)
 
             if self.include_misspelling:
                 vectorized_context = comp_function((vectorized_left_window, center, vectorized_right_window))
@@ -213,8 +220,8 @@ class Development(object):
 
             # make vector representations of candidates
             for i, candidate in enumerate(candidates):
-                if candidate in self.model.get_words():
-                    candidate_vectors.append(self.normalize(np.array(self.model.get_word_vector(candidate))))
+                if candidate in self.gen_model.vocab:
+                    candidate_vectors.append(self.normalize(np.array(self.gen_model[candidate])))
                 else:
                     if self.include_oov_candidates:
                         candidate_vectors.append(self.normalize(np.array(self.model.get_word_vector(candidate))))
